@@ -54,8 +54,10 @@
 #'  the END date will be change to today
 #'  (since otherwise, we will only get many 404 errors)
 #' @param override boolean (default is FALSE) - should the function download files that
-#' are already available in the temp folder
-#' @param message boolean (default is TRUE) - should a message be printed in interesting cases.
+#' are already available in the temp folder?
+#' @param message boolean (default is TRUE) - should a message be printed in interesting cases?
+#' @param subsample numeric (default is NULL) - optionally return subsample number of days from the START/END range.
+#' @param even_space_subsample boolean (default is FALSE) - should subsample periods be evenly spaced or random?
 #' @param ... not in use.
 #' @return Returns the value of log_folder.
 #' @seealso \link{download_RStudio_CRAN_data}, \link{read_RStudio_CRAN_data},\link{barplot_package_users_per_day}
@@ -79,6 +81,8 @@ download_RStudio_CRAN_data <- function(START = as.Date(Sys.time())-5,
                                        trunc_END_date_to_today = TRUE,
                                        override = FALSE,
                                        message = TRUE,
+                                       subsample = NULL,
+                                       even_space_subsample = FALSE,
                                        ...) {
    # Here's an easy way to get all the URLs in R
    START <- as.Date(START)
@@ -88,6 +92,14 @@ download_RStudio_CRAN_data <- function(START = as.Date(Sys.time())-5,
    if((END > as.Date(Sys.time())+1) & trunc_END_date_to_today) END <- as.Date(Sys.time())+1 # the +1 is just for the case of a difference in times between the computer and the RStudio server.
    
    all_days <- seq(START, END, by = 'day')
+   # optionally sample a subset of day range
+   if (is.numeric(subsample)){
+     if (even_space_subsample){
+       all_days <- seq(START,END,by=(END-START)/subsample)
+     } else {
+       all_days <- sample(all_days,min(length(all_days),subsample))
+     }
+   }
    
    year <- as.POSIXlt(all_days)$year + 1900
    urls <- paste0('http://cran-logs.rstudio.com/', year, '/', all_days, '.csv.gz')
